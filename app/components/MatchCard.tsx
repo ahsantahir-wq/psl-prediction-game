@@ -1,90 +1,128 @@
-'use client'
-
-import { useState } from 'react'
-import { Match } from '@/app/types'
-import PredictionModal from './PredictionModal'
+import { Match } from '@/types'
+import Image from 'next/image'
 
 interface MatchCardProps {
   match: Match
+  onPredict?: (matchId: string) => void
   onPredictionSuccess?: () => void
 }
 
-export default function MatchCard({ match, onPredictionSuccess }: MatchCardProps) {
-  const [showModal, setShowModal] = useState(false)
-
-  const battingTeam = match.batting_team === 'team_a' ? match.team_a : match.team_b
-  const currentScore = match.batting_team === 'team_a' 
-    ? match.current_score_a 
-    : match.current_score_b
+export default function MatchCard({ match, onPredict, onPredictionSuccess }: MatchCardProps) {
+  const getStatusColor = () => {
+    switch (match.status) {
+      case 'live': return 'bg-red-500'
+      case 'upcoming': return 'bg-blue-500'
+      case 'completed': return 'bg-green-500'
+      default: return 'bg-gray-500'
+    }
+  }
 
   return (
-    <>
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-gray-100 hover:border-blue-300 transition">
-        {/* Match Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold uppercase">
-              {match.status === 'live' ? '🔴 Live' : '⏰ Upcoming'}
-            </span>
-            <span className="text-xs opacity-90">
-              {new Date(match.match_date).toLocaleDateString()}
-            </span>
+    <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
+      {/* Status Badge */}
+      <div className="flex justify-between items-center mb-4">
+        <span className={`${getStatusColor()} text-white px-3 py-1 rounded-full text-sm font-semibold uppercase`}>
+          {match.status}
+        </span>
+        <span className="text-gray-400 text-sm">
+          {new Date(match.date).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </span>
+      </div>
+
+      {/* Teams with Logos */}
+      <div className="flex justify-between items-center mb-6">
+        {/* Team A */}
+        <div className="flex flex-col items-center gap-2 flex-1">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <Image 
+              src={match.team_a_logo} 
+              alt={match.team_a}
+              width={64}
+              height={64}
+              className="object-contain"
+              unoptimized
+            />
           </div>
-          <div className="text-center">
-            <h3 className="text-xl font-bold">
-              {match.team_a} vs {match.team_b}
-            </h3>
-          </div>
+          <span className="font-bold text-white text-center text-sm">
+            {match.team_a}
+          </span>
+          {match.score && (
+            <span className="text-green-400 font-bold text-lg">
+              {match.score.team_a.runs}/{match.score.team_a.wickets}
+              <span className="text-gray-400 text-sm ml-1">
+                ({match.score.team_a.overs})
+              </span>
+            </span>
+          )}
         </div>
 
-        {/* Match Status */}
-        {match.status === 'live' && (
-          <div className="bg-gray-50 p-4 border-b">
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">
-                {battingTeam} Batting
-              </div>
-              <div className="text-3xl font-bold text-gray-800">
-                {currentScore || 0}/{(match as any).current_wickets || 0}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">
-                Over {match.current_over || 0}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* VS */}
+        <div className="text-gray-400 font-bold text-2xl mx-4">VS</div>
 
-        {/* Predict Button */}
-        <div className="p-4">
-          {match.status === 'live' ? (
-            <button
-              onClick={() => setShowModal(true)}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg font-bold hover:from-green-600 hover:to-green-700 transition"
-            >
-              🎯 Make Prediction
-            </button>
-          ) : (
-            <button
-              disabled
-              className="w-full bg-gray-200 text-gray-500 py-3 rounded-lg font-bold cursor-not-allowed"
-            >
-              ⏰ Match Not Started
-            </button>
+        {/* Team B */}
+        <div className="flex flex-col items-center gap-2 flex-1">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <Image 
+              src={match.team_b_logo} 
+              alt={match.team_b}
+              width={64}
+              height={64}
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+          <span className="font-bold text-white text-center text-sm">
+            {match.team_b}
+          </span>
+          {match.score && (
+            <span className="text-green-400 font-bold text-lg">
+              {match.score.team_b.runs}/{match.score.team_b.wickets}
+              <span className="text-gray-400 text-sm ml-1">
+                ({match.score.team_b.overs})
+              </span>
+            </span>
           )}
         </div>
       </div>
 
-      {/* Prediction Modal */}
-      {showModal && (
-        <PredictionModal
-          match={match}
-          onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            setShowModal(false)
-            if (onPredictionSuccess) onPredictionSuccess()
-          }}
-        />
+      {/* Live indicator */}
+      {match.status === 'live' && (
+        <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded p-3 mb-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-red-400 font-semibold text-sm">
+              Over {match.current_over}.{match.current_ball} in progress
+            </span>
+          </div>
+        </div>
       )}
-    </>
+
+      {/* Predict Button */}
+      {match.status === 'live' && onPredict && (
+        <button
+          onClick={() => onPredict(match.id)}
+          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold"
+        >
+          Make Prediction
+        </button>
+      )}
+
+      {match.status === 'upcoming' && (
+        <div className="text-center text-gray-400 text-sm">
+          Predictions will open when match goes live
+        </div>
+      )}
+
+      {match.status === 'completed' && (
+        <div className="text-center text-green-400 font-semibold">
+          Match Completed
+        </div>
+      )}
+    </div>
   )
 }

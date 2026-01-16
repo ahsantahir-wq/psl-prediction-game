@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/app/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export default function Wallet({ userId }: { userId: string }) {
   const [wallet, setWallet] = useState<any>(null)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/app/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import AuthForm from './components/AuthForm'
 
 export default function Home() {

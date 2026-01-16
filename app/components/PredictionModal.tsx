@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/app/lib/supabase'
-import { Match, MicroAction } from '@/app/types'
+import { supabase } from '@/lib/supabase'
+import { Match, MicroAction } from '@/types'
 
 interface PredictionModalProps {
   match: Match

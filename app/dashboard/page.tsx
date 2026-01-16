@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/app/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { User } from '@supabase/supabase-js'
 import MatchCard from '@/app/components/MatchCard'
 import LiveMatchFeed from '@/app/components/LiveMatchFeed'  // ← NEW: Added this import

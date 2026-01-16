@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/app/lib/supabase'  // ← Fixed: Use your existing client!
+import { supabase } from '@/lib/supabase'
 
 interface Match {
   id: string
