@@ -27,7 +27,25 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadDashboard()
+    startSimulation()
   }, [])
+
+  // Auto-start simulation on login
+  const startSimulation = () => {
+    // Call simulation API every 8 seconds (slower pace)
+    const simulationInterval = setInterval(async () => {
+      try {
+        await fetch('/api/simulate')
+        // Reload dashboard data to show updates
+        loadDashboard()
+      } catch (error) {
+        console.error('Simulation error:', error)
+      }
+    }, 8000) // 8 seconds between each ball
+
+    // Cleanup on unmount
+    return () => clearInterval(simulationInterval)
+  }
 
   const loadDashboard = async () => {
     try {
@@ -204,11 +222,17 @@ export default function Dashboard() {
         <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">⚡ Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition">
+            <button 
+              onClick={() => window.location.href = '/leaderboard'}
+              className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+            >
               <div className="text-3xl mb-2">📊</div>
               <div className="font-semibold">View Leaderboard</div>
             </button>
-            <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition">
+            <button 
+              onClick={() => window.location.href = '/credits'}
+              className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition"
+            >
               <div className="text-3xl mb-2">💰</div>
               <div className="font-semibold">Load Credits</div>
             </button>

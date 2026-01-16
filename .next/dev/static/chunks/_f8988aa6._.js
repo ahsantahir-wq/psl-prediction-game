@@ -11,7 +11,26 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2
 ;
 const supabaseUrl = ("TURBOPACK compile-time value", "https://wmuibafrpidgwaidekrj.supabase.co");
 const supabaseAnonKey = ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtdWliYWZycGlkZ3dhaWRla3JqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzAzMjEsImV4cCI6MjA4NDE0NjMyMX0.xQ1HvIQnjtf8AeVTWv4J5LbRZC1U8hs5MIBfTSLLDkc");
-const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseAnonKey);
+const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: ("TURBOPACK compile-time truthy", 1) ? window.localStorage : "TURBOPACK unreachable"
+    }
+});
+// Handle auth errors globally
+if ("TURBOPACK compile-time truthy", 1) {
+    supabase.auth.onAuthStateChange((event, session)=>{
+        if (event === 'SIGNED_OUT') {
+            // Clear any stale data
+            localStorage.removeItem('supabase.auth.token');
+        }
+        if (event === 'TOKEN_REFRESHED') {
+            console.log('Token refreshed successfully');
+        }
+    });
+}
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }
@@ -50,7 +69,26 @@ function AuthForm() {
                 });
                 if (error) throw error;
                 if (data.user) {
-                    setMessage('✅ Account created! You got 100 free credits!');
+                    // Create wallet for new user
+                    const { data: walletData, error: walletError } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabase$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from('wallet').insert({
+                        user_id: data.user.id,
+                        credits_balance: 100,
+                        total_predictions: 0
+                    }).select();
+                    console.log('Wallet creation response:', {
+                        walletData,
+                        walletError
+                    });
+                    if (walletError) {
+                        console.error('FULL WALLET ERROR:', JSON.stringify(walletError, null, 2));
+                        setMessage('⚠️ Account created but wallet setup failed. Please refresh.');
+                    } else {
+                        setMessage('✅ Account created! You got 100 free credits!');
+                        // Redirect to dashboard after successful signup
+                        setTimeout(()=>{
+                            window.location.href = '/dashboard';
+                        }, 1000);
+                    }
                 }
             } else {
                 const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabase$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.signInWithPassword({
@@ -59,6 +97,10 @@ function AuthForm() {
                 });
                 if (error) throw error;
                 setMessage('✅ Logged in successfully!');
+                // Redirect to dashboard after successful login
+                setTimeout(()=>{
+                    window.location.href = '/dashboard';
+                }, 500);
             }
         } catch (error) {
             setMessage('❌ ' + error.message);
@@ -79,7 +121,7 @@ function AuthForm() {
                             children: "🏏"
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 51,
+                            lineNumber: 77,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -87,7 +129,7 @@ function AuthForm() {
                             children: "PSL Predictions"
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 52,
+                            lineNumber: 78,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -95,13 +137,13 @@ function AuthForm() {
                             children: isSignUp ? 'Create account & get 100 free credits!' : 'Welcome back!'
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 53,
+                            lineNumber: 79,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/AuthForm.tsx",
-                    lineNumber: 50,
+                    lineNumber: 76,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -115,7 +157,7 @@ function AuthForm() {
                                     children: "Email"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/AuthForm.tsx",
-                                    lineNumber: 60,
+                                    lineNumber: 86,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -127,13 +169,13 @@ function AuthForm() {
                                     className: "w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/AuthForm.tsx",
-                                    lineNumber: 63,
+                                    lineNumber: 89,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 59,
+                            lineNumber: 85,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -143,7 +185,7 @@ function AuthForm() {
                                     children: "Password"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/AuthForm.tsx",
-                                    lineNumber: 74,
+                                    lineNumber: 100,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -156,7 +198,7 @@ function AuthForm() {
                                     className: "w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/AuthForm.tsx",
-                                    lineNumber: 77,
+                                    lineNumber: 103,
                                     columnNumber: 13
                                 }, this),
                                 isSignUp && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -164,13 +206,13 @@ function AuthForm() {
                                     children: "Minimum 6 characters"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/AuthForm.tsx",
-                                    lineNumber: 87,
+                                    lineNumber: 113,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 73,
+                            lineNumber: 99,
                             columnNumber: 11
                         }, this),
                         message && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -178,7 +220,7 @@ function AuthForm() {
                             children: message
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 94,
+                            lineNumber: 120,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -188,13 +230,13 @@ function AuthForm() {
                             children: loading ? '⏳ Processing...' : isSignUp ? '🚀 Sign Up' : '🔓 Login'
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 103,
+                            lineNumber: 129,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/AuthForm.tsx",
-                    lineNumber: 58,
+                    lineNumber: 84,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -208,12 +250,12 @@ function AuthForm() {
                         children: isSignUp ? '← Already have an account? Login' : "Don't have an account? Sign up →"
                     }, void 0, false, {
                         fileName: "[project]/app/components/AuthForm.tsx",
-                        lineNumber: 113,
+                        lineNumber: 139,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/app/components/AuthForm.tsx",
-                    lineNumber: 112,
+                    lineNumber: 138,
                     columnNumber: 9
                 }, this),
                 isSignUp && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -224,7 +266,7 @@ function AuthForm() {
                             children: "🎁 New User Bonus:"
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 128,
+                            lineNumber: 154,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -232,24 +274,24 @@ function AuthForm() {
                             children: "Get 100 free credits to start predicting!"
                         }, void 0, false, {
                             fileName: "[project]/app/components/AuthForm.tsx",
-                            lineNumber: 131,
+                            lineNumber: 157,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/AuthForm.tsx",
-                    lineNumber: 127,
+                    lineNumber: 153,
                     columnNumber: 11
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/components/AuthForm.tsx",
-            lineNumber: 49,
+            lineNumber: 75,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/components/AuthForm.tsx",
-        lineNumber: 48,
+        lineNumber: 74,
         columnNumber: 5
     }, this);
 }
@@ -287,10 +329,21 @@ function Home() {
         }
     }["Home.useEffect"], []);
     const checkUser = async ()=>{
-        const { data: { user } } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabase$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.getUser();
-        if (user) {
-            window.location.href = '/dashboard';
-        } else {
+        try {
+            const { data: { user }, error } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabase$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.getUser();
+            if (error) {
+                // Clear invalid session
+                await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$supabase$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.signOut();
+                setLoading(false);
+                return;
+            }
+            if (user) {
+                window.location.href = '/dashboard';
+            } else {
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Auth check error:', error);
             setLoading(false);
         }
     };
@@ -302,12 +355,12 @@ function Home() {
                 children: "⏳ Loading..."
             }, void 0, false, {
                 fileName: "[project]/app/page.tsx",
-                lineNumber: 26,
+                lineNumber: 39,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/page.tsx",
-            lineNumber: 25,
+            lineNumber: 38,
             columnNumber: 7
         }, this);
     }
@@ -324,7 +377,7 @@ function Home() {
                             children: "🏏 PSL Predictor"
                         }, void 0, false, {
                             fileName: "[project]/app/page.tsx",
-                            lineNumber: 35,
+                            lineNumber: 48,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -332,29 +385,29 @@ function Home() {
                             children: "Real-time cricket predictions. Skill-based. Instant rewards."
                         }, void 0, false, {
                             fileName: "[project]/app/page.tsx",
-                            lineNumber: 36,
+                            lineNumber: 49,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/page.tsx",
-                    lineNumber: 34,
+                    lineNumber: 47,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$AuthForm$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                     fileName: "[project]/app/page.tsx",
-                    lineNumber: 40,
+                    lineNumber: 53,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/page.tsx",
-            lineNumber: 33,
+            lineNumber: 46,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/page.tsx",
-        lineNumber: 32,
+        lineNumber: 45,
         columnNumber: 5
     }, this);
 }
