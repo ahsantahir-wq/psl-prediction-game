@@ -32,8 +32,11 @@ export default function Dashboard() {
   const loadDashboard = async () => {
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError || !user) {
+        // Clear invalid session and redirect
+        await supabase.auth.signOut()
         window.location.href = '/'
         return
       }

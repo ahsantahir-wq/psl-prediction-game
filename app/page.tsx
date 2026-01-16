@@ -12,10 +12,23 @@ export default function Home() {
   }, [])
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      window.location.href = '/dashboard'
-    } else {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error) {
+        // Clear invalid session
+        await supabase.auth.signOut()
+        setLoading(false)
+        return
+      }
+      
+      if (user) {
+        window.location.href = '/dashboard'
+      } else {
+        setLoading(false)
+      }
+    } catch (error) {
+      console.error('Auth check error:', error)
       setLoading(false)
     }
   }

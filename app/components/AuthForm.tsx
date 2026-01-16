@@ -24,9 +24,30 @@ export default function AuthForm() {
 
         if (error) throw error
 
-        if (data.user) {  // Create wallet for new user  const { data: walletData, error: walletError } = await supabase    .from('wallet')    .insert({      user_id: data.user.id,      credits_balance: 100,      total_predictions: 0    })    .select()  console.log('Wallet creation response:', { walletData, walletError })  if (walletError) {    console.error('FULL WALLET ERROR:', JSON.stringify(walletError, null, 2))    setMessage('⚠️ Account created but wallet setup failed. Please refresh.')  } else {    setMessage('✅ Account created! You got 100 free credits!')  }}
-
-          setMessage('✅ Account created! You got 100 free credits!')
+        if (data.user) {
+          // Create wallet for new user
+          const { data: walletData, error: walletError } = await supabase
+            .from('wallet')
+            .insert({
+              user_id: data.user.id,
+              credits_balance: 100,
+              total_predictions: 0
+            })
+            .select()
+          
+          console.log('Wallet creation response:', { walletData, walletError })
+          
+          if (walletError) {
+            console.error('FULL WALLET ERROR:', JSON.stringify(walletError, null, 2))
+            setMessage('⚠️ Account created but wallet setup failed. Please refresh.')
+          } else {
+            setMessage('✅ Account created! You got 100 free credits!')
+            
+            // Redirect to dashboard after successful signup
+            setTimeout(() => {
+              window.location.href = '/dashboard'
+            }, 1000)
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -36,6 +57,11 @@ export default function AuthForm() {
 
         if (error) throw error
         setMessage('✅ Logged in successfully!')
+        
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 500)
       }
     } catch (error: any) {
       setMessage('❌ ' + error.message)
