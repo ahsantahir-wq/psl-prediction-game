@@ -212,7 +212,10 @@ export default function Dashboard() {
               <div className="text-3xl mb-2">💰</div>
               <div className="font-semibold">Load Credits</div>
             </button>
-            <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition">
+            <button 
+              onClick={() => window.location.href = '/predictions'}
+              className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
+            >
               <div className="text-3xl mb-2">📜</div>
               <div className="font-semibold">My History</div>
             </button>
