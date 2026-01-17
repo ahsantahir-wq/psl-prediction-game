@@ -60,6 +60,20 @@ export default function Dashboard() {
       }
       setUser(user)
 
+      // MVP: Reset all matches for fresh simulation experience on each login
+      await supabase
+        .from('matches')
+        .update({
+          status: 'live',
+          ball_number: 0,
+          current_score_a: 0,
+          current_wickets_a: 0,
+          current_over: 0,
+          last_ball_runs: 0,
+          last_ball_event: null
+        })
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Update all matches
+
       // Get wallet
       const { data: walletData } = await supabase
         .from('wallet')
