@@ -15,6 +15,11 @@ export interface Match {
   batting_team?: 'team_a' | 'team_b'
   current_score_a?: number
   current_score_b?: number
+  current_wickets_a?: number
+  current_wickets_b?: number
+  ball_number?: number
+  last_ball_runs?: number
+  last_ball_event?: string | null
 }
 
 export interface Wallet {

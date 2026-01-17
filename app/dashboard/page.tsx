@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { User } from '@supabase/supabase-js'
 import MatchCard from '@/app/components/MatchCard'
-import LiveMatchFeed from '@/app/components/LiveMatchFeed'  // ← NEW: Added this import
+import LiveMatchFeed from '@/app/components/LiveMatchFeed'
+import PredictionModal from '@/app/components/PredictionModal'
 
 interface Wallet {
   credits_balance: number
@@ -24,20 +25,18 @@ export default function Dashboard() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [hasReset, setHasReset] = useState(false)
+  const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
 
   useEffect(() => {
-    loadDashboard()
-    startSimulation()
-  }, [])
-
-  // Auto-start simulation on login
-  const startSimulation = () => {
-    // Call simulation API every 8 seconds (slower pace)
+    loadDashboard(true) // Initial load with reset
+    
+    // Auto-start simulation with 8 second intervals
     const simulationInterval = setInterval(async () => {
       try {
         await fetch('/api/simulate')
         // Reload dashboard data to show updates
-        loadDashboard()
+        await loadDashboard(false) // Don't reset on refresh
       } catch (error) {
         console.error('Simulation error:', error)
       }
@@ -45,9 +44,9 @@ export default function Dashboard() {
 
     // Cleanup on unmount
     return () => clearInterval(simulationInterval)
-  }
+  }, [])
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (shouldReset: boolean = false) => {
     try {
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -60,19 +59,23 @@ export default function Dashboard() {
       }
       setUser(user)
 
-      // MVP: Reset all matches for fresh simulation experience on each login
-      await supabase
-        .from('matches')
-        .update({
-          status: 'live',
-          ball_number: 0,
-          current_score_a: 0,
-          current_wickets_a: 0,
-          current_over: 0,
-          last_ball_runs: 0,
-          last_ball_event: null
-        })
-        .neq('id', '00000000-0000-0000-0000-000000000000') // Update all matches
+      // MVP: Reset all matches for fresh simulation experience ONLY on initial login
+      if (shouldReset && !hasReset) {
+        await supabase
+          .from('matches')
+          .update({
+            status: 'live',
+            ball_number: 0,
+            current_score_a: 0,
+            current_wickets_a: 0,
+            current_over: 0,
+            last_ball_runs: 0,
+            last_ball_event: null
+          })
+          .neq('id', '00000000-0000-0000-0000-000000000000') // Update all matches
+        
+        setHasReset(true)
+      }
 
       // Get wallet
       const { data: walletData } = await supabase
@@ -225,7 +228,8 @@ export default function Dashboard() {
                 <MatchCard 
                   key={match.id} 
                   match={match}
-                  onPredictionSuccess={loadDashboard}
+                  onPredict={setSelectedMatch}
+                  onPredictionSuccess={() => loadDashboard(false)}
                 />
               ))}
             </div>
@@ -260,6 +264,18 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Prediction Modal */}
+      {selectedMatch && (
+        <PredictionModal
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
+          onSuccess={() => {
+            setSelectedMatch(null)
+            loadDashboard(false)
+          }}
+        />
+      )}
     </div>
   )
 }

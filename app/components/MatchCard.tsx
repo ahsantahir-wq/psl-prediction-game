@@ -74,11 +74,11 @@ export default function MatchCard({ match, onPredict, onPredictionSuccess }: Mat
             <h3 className="text-white font-bold text-center text-sm">
               {match.team_a}
             </h3>
-            {match.score && (
+            {match.status === 'live' && match.current_score_a !== undefined && (
               <p className="text-green-400 font-bold text-lg mt-1">
-                {match.score.team_a.runs}/{match.score.team_a.wickets}
+                {match.current_score_a}/{match.current_wickets_a || 0}
                 <span className="text-gray-400 text-sm ml-1">
-                  ({match.score.team_a.overs})
+                  ({Math.floor((match.ball_number || 0) / 6)}.{(match.ball_number || 0) % 6})
                 </span>
               </p>
             )}
