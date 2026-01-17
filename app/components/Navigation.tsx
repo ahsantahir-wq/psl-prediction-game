@@ -18,7 +18,7 @@ export default function Navigation() {
   ]
 
   return (
-    <nav className="bg-gradient-to-r from-purple-700 via-blue-600 to-green-600 text-white shadow-lg sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-navy-700 via-charcoal-600 to-navy-600 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -54,7 +54,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center gap-3">
             <a
               href="/credits"
-              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-lg font-bold text-sm transition"
+              className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-sm transition shadow-lg"
             >
               💰 Load Credits
             </a>
@@ -63,14 +63,14 @@ export default function Navigation() {
               className="p-2 hover:bg-white hover:bg-opacity-10 rounded-lg transition relative"
             >
               <span className="text-2xl">🔔</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full"></span>
             </a>
             <button
               onClick={() => {
                 localStorage.clear()
                 window.location.href = '/'
               }}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg font-semibold text-sm transition"
+              className="px-4 py-2 bg-charcoal-600 hover:bg-charcoal-700 rounded-lg font-semibold text-sm transition"
             >
               Logout
             </button>
@@ -111,7 +111,7 @@ export default function Navigation() {
             <div className="pt-4 border-t border-white border-opacity-20 space-y-2">
               <a
                 href="/credits"
-                className="block px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-lg font-bold text-center"
+                className="block px-4 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-bold text-center shadow-lg"
               >
                 💰 Load Credits
               </a>
@@ -126,7 +126,7 @@ export default function Navigation() {
                   localStorage.clear()
                   window.location.href = '/'
                 }}
-                className="w-full px-4 py-3 bg-red-500 hover:bg-red-600 rounded-lg font-semibold"
+                className="w-full px-4 py-3 bg-charcoal-600 hover:bg-charcoal-700 rounded-lg font-semibold"
               >
                 Logout
               </button>
