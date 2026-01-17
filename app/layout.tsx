@@ -15,9 +15,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PSL Fantasy Prediction League - Test Your Cricket Knowledge",
   description: "Join the ultimate PSL prediction league. Make strategic predictions, compete with fans, and climb the leaderboard!",
-  icons: {
-    icon: '/favicon.ico',
-  },
 };
 
 export default function RootLayout({
