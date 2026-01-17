@@ -7,6 +7,8 @@ import MatchCard from '@/app/components/MatchCard'
 import LiveMatchFeed from '@/app/components/LiveMatchFeed'
 import PredictionModal from '@/app/components/PredictionModal'
 
+const MATCHES_PER_PAGE = 5;
+
 interface Wallet {
   credits_balance: number
   total_predictions: number
@@ -25,6 +27,9 @@ export default function Dashboard() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [offset, setOffset] = useState(0)
   const [hasReset, setHasReset] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
 
@@ -46,8 +51,10 @@ export default function Dashboard() {
     return () => clearInterval(simulationInterval)
   }, [])
 
-  const loadDashboard = async (shouldReset: boolean = false) => {
+  const loadDashboard = async (shouldReset: boolean = false, loadMore = false) => {
     try {
+      if (loadMore) setLoadingMore(true);
+      
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
@@ -95,19 +102,46 @@ export default function Dashboard() {
       
       setStats(statsData)
 
-      // Get active/upcoming matches
-      const { data: matchesData } = await supabase
-        .from('matches')
-        .select('*')
-        .in('status', ['upcoming', 'live'])
-        .order('match_date', { ascending: true })
-      
-      setMatches(matchesData || [])
+      // Load favorited matches with pagination
+      const { data: favoritesData } = await supabase
+        .from('user_favorites')
+        .select('match_id')
+        .eq('user_id', user.id);
+
+      if (favoritesData && favoritesData.length > 0) {
+        const favoriteMatchIds = favoritesData.map(f => f.match_id);
+        
+        const currentOffset = loadMore ? offset : 0;
+        
+        const { data: matchesData } = await supabase
+          .from('matches')
+          .select('*')
+          .in('id', favoriteMatchIds)
+          .eq('status', 'live')
+          .order('match_date', { ascending: true })
+          .range(currentOffset, currentOffset + MATCHES_PER_PAGE - 1);
+
+        if (matchesData) {
+          if (loadMore) {
+            setMatches(prev => [...prev, ...matchesData]);
+            setOffset(prev => prev + MATCHES_PER_PAGE);
+          } else {
+            setMatches(matchesData);
+            setOffset(MATCHES_PER_PAGE);
+          }
+          
+          setHasMore(matchesData.length === MATCHES_PER_PAGE);
+        }
+      } else {
+        setMatches([]);
+        setHasMore(false);
+      }
 
     } catch (error) {
       console.error('Dashboard load error:', error)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
@@ -203,36 +237,60 @@ export default function Dashboard() {
           <LiveMatchFeed />
         </div>
 
-        {/* Matches Section */}
+        {/* Favorited Matches */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">🏏 Active Matches</h2>
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
-              {matches.length} Live
-            </span>
+            <h2 className="text-2xl font-bold text-gray-800">⭐ Your Favorite Matches</h2>
+            <a 
+              href="/matches"
+              className="text-blue-600 hover:underline text-sm font-semibold"
+            >
+              View All Live Matches →
+            </a>
           </div>
 
           {matches.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">🏏</div>
+              <div className="text-6xl mb-4">⭐</div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                No Active Matches
+                You haven't favorited any matches yet.
               </h3>
-              <p className="text-gray-500">
-                Check back soon for live PSL action!
+              <p className="text-gray-500 mb-6">
+                Browse live matches and star your favorites to see them here!
               </p>
+              <a
+                href="/matches"
+                className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold"
+              >
+                Browse Live Matches
+              </a>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {matches.map((match) => (
-                <MatchCard 
-                  key={match.id} 
-                  match={match}
-                  onPredict={setSelectedMatch}
-                  onPredictionSuccess={() => loadDashboard(false)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {matches.map((match) => (
+                  <MatchCard 
+                    key={match.id} 
+                    match={match}
+                    onPredict={setSelectedMatch}
+                    onPredictionSuccess={() => loadDashboard(false)}
+                  />
+                ))}
+              </div>
+              
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={() => loadDashboard(false, true)}
+                    disabled={loadingMore}
+                    className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {loadingMore ? 'Loading...' : 'Load More Matches'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 

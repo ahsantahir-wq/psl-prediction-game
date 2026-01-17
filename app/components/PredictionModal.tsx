@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Match, MicroAction } from '@/types'
+import TeamLogo from './TeamLogo'
 
 interface PredictionModalProps {
   match: Match
@@ -161,12 +162,9 @@ if (currentStats) {
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-t-2xl">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-2xl font-bold mb-2">🎮 Make Your Prediction</h2>
-              <p className="text-sm opacity-90">
-                {match.team_a} vs {match.team_b}
-              </p>
               <p className="text-xs opacity-75">
                 Over {match.current_over || 0} • Live Now 🔴
               </p>
@@ -177,6 +175,13 @@ if (currentStats) {
             >
               ✕
             </button>
+          </div>
+          
+          {/* Team Logos */}
+          <div className="flex items-center justify-center gap-4">
+            <TeamLogo teamName={match.team_a} size={40} />
+            <span className="text-white font-bold text-xl">vs</span>
+            <TeamLogo teamName={match.team_b} size={40} />
           </div>
         </div>
 

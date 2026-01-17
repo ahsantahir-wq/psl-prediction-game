@@ -2,24 +2,23 @@ export interface Match {
   id: string
   team_a: string
   team_b: string
-  team_a_logo: string
-  team_b_logo: string
-  date: string
+  venue: string
+  match_date: string
   status: 'upcoming' | 'live' | 'completed'
-  score?: {
-    team_a: { runs: number; wickets: number; overs: number }
-    team_b: { runs: number; wickets: number; overs: number }
-  }
   current_over?: number
-  current_ball?: number
-  batting_team?: 'team_a' | 'team_b'
   current_score_a?: number
   current_score_b?: number
   current_wickets_a?: number
   current_wickets_b?: number
+  batting_team?: string
+  team_a_logo?: string
+  team_b_logo?: string
+  ball_history?: any
+  innings?: number
   ball_number?: number
   last_ball_runs?: number
   last_ball_event?: string | null
+  is_favorite?: boolean
 }
 
 export interface Wallet {
@@ -53,6 +52,14 @@ export interface UserStats {
   total_winnings: number
   accuracy_rate: number
   rank?: number
+}
+
+// User Favorites
+export interface UserFavorite {
+  id: string
+  user_id: string
+  match_id: string
+  created_at: string
 }
 
 // ✅ Add this MicroAction interface

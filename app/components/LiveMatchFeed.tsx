@@ -1,144 +1,116 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-
-interface Match {
-  id: string
-  team_a: string
-  team_b: string
-  status: string
-  current_score_a: number
-  wickets_a: number
-  ball_number: number
-  total_balls: number
-  last_ball_runs: number
-  last_ball_event: string
-  updated_at: string
-}
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Match } from '@/types';
+import TeamLogo from './TeamLogo';
 
 export default function LiveMatchFeed() {
-  const [matches, setMatches] = useState<Match[]>([])
-  const [loading, setLoading] = useState(true)
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const fetchMatches = async () => {
+  useEffect(() => {
+    loadMatches();
+    
+    const channel = supabase
+      .channel('matches-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'matches' },
+        () => loadMatches()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  async function loadMatches() {
+    console.log('🔍 Loading live matches...');
     const { data, error } = await supabase
       .from('matches')
       .select('*')
       .eq('status', 'live')
-      .order('updated_at', { ascending: false })
+      .order('match_date', { ascending: true });
 
-    if (data) {
-      setMatches(data)
-      setLoading(false)
+    if (error) {
+      console.error('❌ Error loading matches:', error);
+    } else {
+      console.log('✅ Live matches loaded:', data?.length || 0);
+      setMatches(data || []);
     }
-  }
-
-  const simulateBall = async () => {
-    await fetch('/api/simulate')
-    await fetchMatches()
-  }
-
-  useEffect(() => {
-    fetchMatches()
-
-    // Auto-simulate every 3 seconds
-    const interval = setInterval(() => {
-      simulateBall()
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const getBallIcon = (event: string) => {
-    if (event?.includes('FOUR')) return '🎯'
-    if (event?.includes('SIX')) return '🚀'
-    if (event?.includes('WICKET')) return '🔥'
-    if (event?.includes('Dot')) return '⚪'
-    return '🏏'
-  }
-
-  const getCurrentOver = (ballNumber: number) => {
-    return Math.floor(ballNumber / 6)
-  }
-
-  const getBallInOver = (ballNumber: number) => {
-    return ballNumber % 6
+    setLoading(false);
   }
 
   if (loading) {
-    return <div className="text-center py-8">Loading live matches...</div>
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
   }
 
   if (matches.length === 0) {
     return (
-      <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-        <p className="text-gray-500 text-lg mb-2">🏏 No Live Matches</p>
-        <p className="text-sm text-gray-400">Matches will appear here when they start</p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
+        <p className="text-gray-500 text-sm">No live matches at the moment</p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-4">
-      {matches.map((match) => {
-        const currentOver = getCurrentOver(match.ball_number)
-        const ballInOver = getBallInOver(match.ball_number)
-        const progress = (match.ball_number / match.total_balls) * 100
+      {matches.map((match) => (
+        <div key={match.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-4">
+            <span className="px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase bg-red-100 text-red-600">
+              • LIVE
+            </span>
+            <span className="text-[11px] text-gray-400">{match.venue}</span>
+          </div>
 
-        return (
-          <div key={match.id} className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-            {/* Match Header */}
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  {match.team_a} vs {match.team_b}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Over {currentOver}.{ballInOver} / {match.total_balls / 6}
-                </p>
+          {/* Teams */}
+          <div className="space-y-4 mb-4">
+            {/* Team A */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <TeamLogo teamName={match.team_a} size={32} />
+                <span className="font-bold text-gray-800">{match.team_a}</span>
               </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-green-600">
-                  {match.current_score_a}/{match.wickets_a}
-                </div>
-                <span className="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                  🔴 LIVE
-                </span>
-              </div>
+              <span className="font-black text-lg">
+                {match.current_score_a || 0}/{match.current_wickets_a || 0}
+              </span>
             </div>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-              <div
-                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-
-            {/* Last Ball */}
-            {match.last_ball_event && (
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">{getBallIcon(match.last_ball_event)}</span>
-                    <div>
-                      <p className="text-sm text-gray-500">Last Ball</p>
-                      <p className="font-bold text-lg text-gray-800">{match.last_ball_event}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600">
-                      {match.last_ball_runs > 0 ? `+${match.last_ball_runs}` : match.last_ball_runs}
-                    </div>
-                    <p className="text-xs text-gray-500">runs</p>
-                  </div>
-                </div>
+            {/* Team B */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <TeamLogo teamName={match.team_b} size={32} />
+                <span className="font-bold text-gray-800">{match.team_b}</span>
               </div>
+              <span className="font-black text-lg">
+                {match.current_score_b || 0}/{match.current_wickets_b || 0}
+              </span>
+            </div>
+          </div>
+
+          {/* Match Info */}
+          <div className="pt-4 border-t border-dashed border-gray-100 flex justify-between items-center">
+            <span className="text-xs text-gray-500">
+              Over {match.current_over || 0}.{match.ball_number || 0}
+            </span>
+            {match.batting_team && (
+              <span className="text-xs font-bold text-teal-600">
+                Batting: {match.batting_team}
+              </span>
             )}
           </div>
-        )
-      })}
+        </div>
+      ))}
     </div>
-  )
+  );
 }

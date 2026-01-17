@@ -1,4 +1,5 @@
 import { Match } from '@/types'
+import TeamLogo from './TeamLogo'
 
 interface MatchCardProps {
   match: Match
@@ -6,155 +7,156 @@ interface MatchCardProps {
   onPredictionSuccess?: () => void
 }
 
-export default function MatchCard({ match, onPredict, onPredictionSuccess }: MatchCardProps) {
-  // Team logos from Supabase Storage
-  const getTeamLogo = (teamName: string) => {
-    const baseUrl = 'https://wmuibafrpidgwaidekrj.supabase.co/storage/v1/object/public/team-logos'
-    
-    const logos: { [key: string]: string } = {
-      'Karachi Kings': `${baseUrl}/Karachi_Kings.png`,
-      'Lahore Qalandars': `${baseUrl}/Lahore_Qalandars.png`,
-      'Islamabad United': `${baseUrl}/Islamabad_United.png`,
-      'Multan Sultans': `${baseUrl}/MultanSultans.png`,
-      'Peshawar Zalmi': `${baseUrl}/Peshawar_Zalmi_logo.png`,
-      'Quetta Gladiators': `${baseUrl}/Quetta_Gladiators.png`,
+export default function MatchCard({ match, onPredict }: MatchCardProps) {
+
+  const getStatusBadge = () => {
+    switch (match.status) {
+      case 'live':
+        return (
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border-2 border-red-500 rounded-lg">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-red-500 font-bold text-sm uppercase tracking-wider">
+              Live Now
+            </span>
+          </div>
+        )
+      case 'upcoming':
+        return (
+          <div className="px-4 py-2 bg-amber-500/20 border-2 border-amber-500 rounded-lg">
+            <span className="text-amber-500 font-semibold text-sm uppercase tracking-wide">
+              Upcoming
+            </span>
+          </div>
+        )
+      case 'completed':
+        return (
+          <div className="px-4 py-2 bg-slate-500/20 border-2 border-slate-500 rounded-lg">
+            <span className="text-slate-400 font-semibold text-sm uppercase tracking-wide">
+              Completed
+            </span>
+          </div>
+        )
+      default:
+        return null
     }
-    return logos[teamName] || '/placeholder-team.png'
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+  const formatMatchTime = () => {
+    const date = new Date(match.match_date)
+    const now = new Date()
+    const diffMs = date.getTime() - now.getTime()
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+
+    if (match.status === 'live') {
+      return `Over ${match.current_over || 0}`
+    }
+
+    if (match.status === 'upcoming') {
+      if (diffHours < 24) {
+        return diffHours > 0 
+          ? `Starts in ${diffHours}h ${diffMins}m`
+          : `Starts in ${diffMins}m`
+      }
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+
+    return 'Match Ended'
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700">
-      {/* Header */}
-      <div className="p-4 bg-gray-900 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {match.status === 'live' && (
-            <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-              LIVE
-            </span>
-          )}
-          {match.status === 'upcoming' && (
-            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-              UPCOMING
-            </span>
-          )}
-          {match.status === 'completed' && (
-            <span className="bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-              COMPLETED
-            </span>
-          )}
+    <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden hover:border-teal-500 transition-all">
+      {/* Status Header */}
+      <div className="bg-slate-900/50 px-6 py-4 border-b border-slate-700">
+        <div className="flex items-center justify-between">
+          {getStatusBadge()}
+          <div className="text-slate-400 text-sm font-medium">
+            {formatMatchTime()}
+          </div>
         </div>
-        <span className="text-gray-400 text-sm">{formatDate(match.date)}</span>
+        {match.venue && (
+          <div className="text-slate-500 text-xs mt-2">📍 {match.venue}</div>
+        )}
       </div>
 
       {/* Teams Section */}
       <div className="p-6">
-        <div className="flex items-center justify-between gap-6">
-          {/* Team A */}
-          <div className="flex flex-col items-center flex-1">
-            <div className="w-20 h-20 mb-3 bg-white rounded-full p-2 flex items-center justify-center">
-              <img
-                src={getTeamLogo(match.team_a)}
-                alt={match.team_a}
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23374151" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="40" text-anchor="middle" dy=".3em" fill="%239CA3AF"%3E🏏%3C/text%3E%3C/svg%3E'
-                }}
-              />
+        {/* Team A */}
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
+          <div className="flex items-center gap-4">
+            <TeamLogo teamName={match.team_a} size={48} />
+            <div>
+              <div className="text-lg font-bold text-white">{match.team_a}</div>
+              {match.status === 'live' && match.batting_team === match.team_a && (
+                <div className="text-xs text-teal-400 font-semibold">• Batting</div>
+              )}
             </div>
-            <h3 className="text-white font-bold text-center text-sm">
-              {match.team_a}
-            </h3>
-            {match.status === 'live' && match.current_score_a !== undefined && (
-              <p className="text-green-400 font-bold text-lg mt-1">
-                {match.current_score_a}/{match.current_wickets_a || 0}
-                <span className="text-gray-400 text-sm ml-1">
-                  ({Math.floor((match.ball_number || 0) / 6)}.{(match.ball_number || 0) % 6})
-                </span>
-              </p>
-            )}
           </div>
-
-          {/* VS */}
-          <div className="text-gray-500 font-bold text-2xl">VS</div>
-
-          {/* Team B */}
-          <div className="flex flex-col items-center flex-1">
-            <div className="w-20 h-20 mb-3 bg-white rounded-full p-2 flex items-center justify-center">
-              <img
-                src={getTeamLogo(match.team_b)}
-                alt={match.team_b}
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23374151" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="40" text-anchor="middle" dy=".3em" fill="%239CA3AF"%3E🏏%3C/text%3E%3C/svg%3E'
-                }}
-              />
+          
+          {match.status !== 'upcoming' && (
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white">
+                {match.current_score_a || 0}/{match.current_wickets_a || 0}
+              </div>
+              {match.status === 'live' && (
+                <div className="text-xs text-slate-400">
+                  ({match.current_over || 0} overs)
+                </div>
+              )}
             </div>
-            <h3 className="text-white font-bold text-center text-sm">
-              {match.team_b}
-            </h3>
-            {match.score && (
-              <p className="text-green-400 font-bold text-lg mt-1">
-                {match.score.team_b.runs}/{match.score.team_b.wickets}
-                <span className="text-gray-400 text-sm ml-1">
-                  ({match.score.team_b.overs})
-                </span>
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Current Over Info for Live Matches */}
-        {match.status === 'live' && match.current_over !== undefined && (
-          <div className="mt-4 text-center text-gray-400 text-sm">
-            Over {match.current_over}.{match.current_ball || 0} in progress
+        {/* Team B */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <TeamLogo teamName={match.team_b} size={48} />
+            <div>
+              <div className="text-lg font-bold text-white">{match.team_b}</div>
+              {match.status === 'live' && match.batting_team === match.team_b && (
+                <div className="text-xs text-teal-400 font-semibold">• Batting</div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+          
+          {match.status !== 'upcoming' && (
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white">
+                {match.current_score_b || 0}/{match.current_wickets_b || 0}
+              </div>
+              {match.status === 'live' && (
+                <div className="text-xs text-slate-400">
+                  ({match.current_over || 0} overs)
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-      {/* Action Button */}
-      {match.status === 'live' && onPredict && (
-        <div className="px-6 pb-6">
+        {/* Action Button */}
+        {onPredict && (
           <button
             onClick={() => onPredict(match)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
+            disabled={match.status === 'completed'}
+            className={`w-full py-3 px-4 rounded-lg font-semibold transition-all mt-4 ${
+              match.status === 'live'
+                ? 'bg-teal-500 hover:bg-teal-600 text-white'
+                : match.status === 'upcoming'
+                ? 'bg-amber-500/20 text-amber-400 border-2 border-amber-500/50 hover:bg-amber-500/30'
+                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+            }`}
           >
-            Make Prediction
+            {match.status === 'live' && '🎯 Make Prediction'}
+            {match.status === 'upcoming' && '⏳ Pre-Match Predictions'}
+            {match.status === 'completed' && '✓ Match Ended'}
           </button>
-        </div>
-      )}
-
-      {match.status === 'upcoming' && (
-        <div className="px-6 pb-6">
-          <button
-            disabled
-            className="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed"
-          >
-            Match Not Started
-          </button>
-        </div>
-      )}
-
-      {match.status === 'completed' && (
-        <div className="px-6 pb-6">
-          <button
-            disabled
-            className="w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed"
-          >
-            Match Ended
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
