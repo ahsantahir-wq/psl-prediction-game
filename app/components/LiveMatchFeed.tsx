@@ -78,8 +78,10 @@ export default function LiveMatchFeed() {
             {/* Team A */}
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <TeamLogo teamName={match.team_a} size={32} />
-                <span className="font-bold text-gray-800">{match.team_a}</span>
+                <TeamLogo teamName={typeof match.team_a === 'string' ? match.team_a : match.team_a?.name || ''} size={32} />
+                <span className="font-bold text-gray-800">
+                  {typeof match.team_a === 'string' ? match.team_a : match.team_a?.name || 'Team A'}
+                </span>
               </div>
               <span className="font-black text-lg">
                 {match.current_score_a || 0}/{match.current_wickets_a || 0}
@@ -89,8 +91,10 @@ export default function LiveMatchFeed() {
             {/* Team B */}
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <TeamLogo teamName={match.team_b} size={32} />
-                <span className="font-bold text-gray-800">{match.team_b}</span>
+                <TeamLogo teamName={typeof match.team_b === 'string' ? match.team_b : match.team_b?.name || ''} size={32} />
+                <span className="font-bold text-gray-800">
+                  {typeof match.team_b === 'string' ? match.team_b : match.team_b?.name || 'Team B'}
+                </span>
               </div>
               <span className="font-black text-lg">
                 {match.current_score_b || 0}/{match.current_wickets_b || 0}

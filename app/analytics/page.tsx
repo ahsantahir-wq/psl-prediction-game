@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Player } from '@/lib/playerService';
+import type { Player } from '@/types';
 
 export default function AnalyticsPage() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -81,15 +81,15 @@ export default function AnalyticsPage() {
                   <>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/70">Runs</span>
-                      <span className="text-white font-bold">{player.bat_runs}</span>
+                      <span className="text-white font-bold">{player.bat_runs || 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/70">Strike Rate</span>
-                      <span className="text-white font-bold">{player.bat_strike_rate?.toFixed(2)}</span>
+                      <span className="text-white font-bold">{player.bat_strike_rate?.toFixed(2) || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/70">Average</span>
-                      <span className="text-white font-bold">{player.bat_average?.toFixed(2)}</span>
+                      <span className="text-white font-bold">{player.bat_average?.toFixed(2) || 'N/A'}</span>
                     </div>
                   </>
                 )}
@@ -97,11 +97,11 @@ export default function AnalyticsPage() {
                   <>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/70">Wickets</span>
-                      <span className="text-white font-bold">{player.bowl_wickets}</span>
+                      <span className="text-white font-bold">{player.bowl_wickets || 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/70">Economy</span>
-                      <span className="text-white font-bold">{player.bowl_economy?.toFixed(2)}</span>
+                      <span className="text-white font-bold">{player.bowl_economy?.toFixed(2) || 'N/A'}</span>
                     </div>
                   </>
                 )}
@@ -136,13 +136,13 @@ export default function AnalyticsPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-white/70 text-sm">Value Score</span>
                   <span className="text-2xl font-bold text-yellow-400">
-                    {player.value_score?.toFixed(1)}
+                    {player.value_score?.toFixed(1) || '0.0'}
                   </span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 mt-2">
                   <div
                     className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full"
-                    style={{ width: `${Math.min((player.value_score / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((player.value_score || 0) / 10) * 100, 100)}%` }}
                   />
                 </div>
               </div>
