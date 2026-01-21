@@ -4,8 +4,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Player } from '@/types';
 
+// Add Team interface for proper typing
+interface PlayerWithTeam extends Player {
+  teams?: {
+    name: string;
+    short_name: string;
+  };
+}
+
 export default function AnalyticsPage() {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [filter, setFilter] = useState<'all' | 'BAT' | 'BOWL' | 'AR' | 'WK'>('all');
   const [search, setSearch] = useState('');
 
@@ -68,7 +76,7 @@ export default function AnalyticsPage() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-xl font-bold text-white">{player.name}</h3>
-                  <p className="text-white/70">{(player as any).teams?.name || 'No Team'}</p>
+                  <p className="text-white/70">{player.teams?.name || 'No Team'}</p>
                 </div>
                 <span className="px-3 py-1 bg-yellow-400/20 text-yellow-300 rounded-full text-sm font-bold">
                   {player.role}
