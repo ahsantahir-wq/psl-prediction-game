@@ -7,8 +7,6 @@ import MatchCard from '@/app/components/MatchCard'
 import LiveMatchFeed from '@/app/components/LiveMatchFeed'
 import PredictionModal from '@/app/components/PredictionModal'
 
-const MATCHES_PER_PAGE = 5;
-
 interface Wallet {
   credits_balance: number
   total_predictions: number
@@ -27,16 +25,17 @@ export default function Dashboard() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [offset, setOffset] = useState(0)
   const [hasReset, setHasReset] = useState(false)
   const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
 
   useEffect(() => {
     loadDashboard(true) // Initial load with reset
     
-    // Auto-start simulation with 8 second intervals
+    // Realistic cricket timing: 35 seconds per ball (5 seconds in dev mode)
+    const BALL_INTERVAL = process.env.NEXT_PUBLIC_DEV_MODE === 'true' 
+      ? 5000   // 5 seconds for testing
+      : 35000  // 35 seconds for production
+    
     const simulationInterval = setInterval(async () => {
       try {
         await fetch('/api/simulate')
@@ -45,16 +44,14 @@ export default function Dashboard() {
       } catch (error) {
         console.error('Simulation error:', error)
       }
-    }, 8000) // 8 seconds between each ball
+    }, BALL_INTERVAL)
 
     // Cleanup on unmount
     return () => clearInterval(simulationInterval)
   }, [])
 
-  const loadDashboard = async (shouldReset: boolean = false, loadMore = false) => {
+  const loadDashboard = async (shouldReset: boolean = false) => {
     try {
-      if (loadMore) setLoadingMore(true);
-      
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
@@ -102,58 +99,26 @@ export default function Dashboard() {
       
       setStats(statsData)
 
-      // Load favorited matches with pagination
-      const { data: favoritesData } = await supabase
-        .from('user_favorites')
-        .select('match_id')
-        .eq('user_id', user.id);
-
-      if (favoritesData && favoritesData.length > 0) {
-        const favoriteMatchIds = favoritesData.map(f => f.match_id);
-        
-        const currentOffset = loadMore ? offset : 0;
-        
-        const { data: matchesData } = await supabase
-          .from('matches')
-          .select('*')
-          .in('id', favoriteMatchIds)
-          .eq('status', 'live')
-          .order('match_date', { ascending: true })
-          .range(currentOffset, currentOffset + MATCHES_PER_PAGE - 1);
-
-        if (matchesData) {
-          if (loadMore) {
-            setMatches(prev => [...prev, ...matchesData]);
-            setOffset(prev => prev + MATCHES_PER_PAGE);
-          } else {
-            setMatches(matchesData);
-            setOffset(MATCHES_PER_PAGE);
-          }
-          
-          setHasMore(matchesData.length === MATCHES_PER_PAGE);
-        }
-      } else {
-        setMatches([]);
-        setHasMore(false);
-      }
+      // Get active/upcoming matches
+      const { data: matchesData } = await supabase
+        .from('matches')
+        .select('*')
+        .in('status', ['upcoming', 'live'])
+        .order('match_date', { ascending: true })
+      
+      setMatches(matchesData || [])
 
     } catch (error) {
       console.error('Dashboard load error:', error)
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/'
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-2xl">⏳ Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-2xl text-white">⏳ Loading...</div>
       </div>
     )
   }
@@ -163,23 +128,7 @@ export default function Dashboard() {
     : '0.0'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">🏏 PSL Predictor</h1>
-            <p className="text-sm text-gray-600">{user?.email}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-gray-900">
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Wallet & Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -226,10 +175,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 🔥 NEW: LIVE MATCH FEED SECTION */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        {/* 🔥 LIVE MATCH FEED SECTION */}
+        <div className="bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-700">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">🔴 Live Ball-by-Ball</h2>
+            <h2 className="text-2xl font-bold text-white">🔴 Live Ball-by-Ball</h2>
             <span className="inline-block bg-red-500 text-white text-xs px-3 py-1 rounded-full animate-pulse">
               LIVE
             </span>
@@ -237,84 +186,60 @@ export default function Dashboard() {
           <LiveMatchFeed />
         </div>
 
-        {/* Favorited Matches */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        {/* Matches Section */}
+        <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">⭐ Your Favorite Matches</h2>
-            <a 
-              href="/matches"
-              className="text-blue-600 hover:underline text-sm font-semibold"
-            >
-              View All Live Matches →
-            </a>
+            <h2 className="text-2xl font-bold text-white">🏏 Active Matches</h2>
+            <span className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-semibold">
+              {matches.length} Live
+            </span>
           </div>
 
           {matches.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">⭐</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                You haven't favorited any matches yet.
+              <div className="text-6xl mb-4">🏏</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                No Active Matches
               </h3>
-              <p className="text-gray-500 mb-6">
-                Browse live matches and star your favorites to see them here!
+              <p className="text-gray-400">
+                Check back soon for live PSL action!
               </p>
-              <a
-                href="/matches"
-                className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold"
-              >
-                Browse Live Matches
-              </a>
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {matches.map((match) => (
-                  <MatchCard 
-                    key={match.id} 
-                    match={match}
-                    onPredict={setSelectedMatch}
-                    onPredictionSuccess={() => loadDashboard(false)}
-                  />
-                ))}
-              </div>
-              
-              {/* Load More Button */}
-              {hasMore && (
-                <div className="mt-8 text-center">
-                  <button
-                    onClick={() => loadDashboard(false, true)}
-                    disabled={loadingMore}
-                    className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {loadingMore ? 'Loading...' : 'Load More Matches'}
-                  </button>
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {matches.map((match) => (
+                <MatchCard 
+                  key={match.id} 
+                  match={match}
+                  onPredict={setSelectedMatch}
+                  onPredictionSuccess={() => loadDashboard(false)}
+                />
+              ))}
+            </div>
           )}
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">⚡ Quick Actions</h2>
+        <div className="mt-8 bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+          <h2 className="text-xl font-bold text-white mb-4">⚡ Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
               onClick={() => window.location.href = '/leaderboard'}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+              className="p-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-blue-500 hover:bg-gray-700 transition text-white"
             >
               <div className="text-3xl mb-2">📊</div>
               <div className="font-semibold">View Leaderboard</div>
             </button>
             <button 
               onClick={() => window.location.href = '/credits'}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition"
+              className="p-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-green-500 hover:bg-gray-700 transition text-white"
             >
               <div className="text-3xl mb-2">💰</div>
               <div className="font-semibold">Load Credits</div>
             </button>
             <button 
               onClick={() => window.location.href = '/predictions'}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition"
+              className="p-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-purple-500 hover:bg-gray-700 transition text-white"
             >
               <div className="text-3xl mb-2">📜</div>
               <div className="font-semibold">My History</div>
